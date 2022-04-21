@@ -5,12 +5,19 @@ import android.os.Bundle
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageButton
-import android.widget.SearchView
+
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SearchView
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.kotlintest.R
-import com.example.kotlintest.recycler.RecyclerViewAdapter
-import com.example.kotlintest.recycler.SearchRecyclerViewAdapter
+import com.example.kotlintest.common.model.Repository
+import com.example.kotlintest.common.model.RepositorySearch
+import com.example.kotlintest.common.model.SearchItem
+import com.example.kotlintest.common.recycler.RecyclerViewAdapter
+import com.example.kotlintest.common.recycler.SearchRecyclerViewAdapter
+import com.example.kotlintest.repository.RepositoryViewActivity
+import kotlin.random.Random
 
 
 class DashboardActivity: AppCompatActivity(),
@@ -18,10 +25,8 @@ class DashboardActivity: AppCompatActivity(),
     RecyclerViewAdapter.ItemClickListener,
     SearchRecyclerViewAdapter.ItemClickListener
 {
-
-    //var presenter: DashboardPresenter? = null
-    var since: Int = 0
-
+    var lastAccess: Int = 0
+    lateinit var presenter: DashboardPresenterImpl
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,13 +37,15 @@ class DashboardActivity: AppCompatActivity(),
         val searchRecyclerView: RecyclerView = findViewById(R.id.recyclerViewSearch)
         val recyclerView: RecyclerView = findViewById(R.id.recyclerView)
 
+        presenter = DashboardPresenterImpl(this)
+
         searchView.setOnQueryTextListener(object: SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(p0: String?): Boolean {
-                //return presenter.searchPublicRepositories()
+            override fun onQueryTextSubmit(p0: String): Boolean {
+                presenter.searchPublicRepositories(p0)
                 return false
             }
 
-            override fun onQueryTextChange(p0: String?): Boolean {
+            override fun onQueryTextChange(p0: String): Boolean {
                 return false
             }
 
@@ -57,47 +64,51 @@ class DashboardActivity: AppCompatActivity(),
             false
         }
         val imageButton: ImageButton = findViewById(R.id.imageButton2)
-        imageButton.setOnClickListener { searchView!!.visibility = View.VISIBLE }
-        //presenter = DashboardPresenterImpl(this)
-        //presenter.getPublicRepositoriesSince(0)
-        since = 0
+        imageButton.setOnClickListener { searchView.visibility = View.VISIBLE }
+
+        lastAccess = Random.nextInt(200000000)
+        presenter.getPublicRepositoriesSince(lastAccess)
+
     }
 
 
 
-    fun showProgressBar() {
+    override fun showProgressBar() {
         findViewById<FrameLayout>(R.id.progressBarOverlay).visibility = View.VISIBLE
     }
 
-    fun hideProgress() {
+    override fun hideProgress() {
         findViewById<FrameLayout>(R.id.progressBarOverlay).visibility = View.GONE
     }
 
-    fun showError(error: String?) {
+    override fun showError(error: String) {
         //TODO mostrar error
     }
 
-    fun updateRepositoryList(list: List<Repository>) {
+    override fun updateRepositoryList(list: MutableList<Repository>) {
         try {
-            since = list[list.size - 1].getId()
-            val layoutManager = LinearLayoutManager(this)
-            if (recyclerView == null) {
-                recyclerView = findViewById(R.id.recyclerView)
+            lastAccess = list[list.size - 1].getId()
+
+            val recyclerView: RecyclerView = findViewById(R.id.recyclerView)
+            if (recyclerView.layoutManager == null) {
+                val layoutManager = LinearLayoutManager(this)
+                val adapter = RecyclerViewAdapter(this, list)
                 recyclerView.setLayoutManager(layoutManager)
-                adapter = RecyclerViewAdapter(this, list)
                 adapter.setClickListener(this)
                 recyclerView.setAdapter(adapter)
-                recyclerView.addOnScrollListener(object : OnScrollListener() {
-                    fun onScrollStateChanged(recyclerView: RecyclerView?, newState: Int) {
+
+                recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                    override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                         super.onScrollStateChanged(recyclerView, newState)
                         if (newState == RecyclerView.SCROLL_STATE_IDLE) {
                             if (layoutManager.findLastVisibleItemPosition() >= adapter.getItemCount() - 1) {
-                                presenter.getPublicRepositoriesSince(since)
+                                presenter.getPublicRepositoriesSince(lastAccess)
                             }
                         }
                     }
                 })
             } else {
+                val adapter = recyclerView.adapter as RecyclerViewAdapter
                 adapter.addItems(list)
                 adapter.notifyDataSetChanged()
             }
@@ -106,34 +117,44 @@ class DashboardActivity: AppCompatActivity(),
         }
     }
 
-    fun showSearchResults(results: RepositorySearch) {
+    override fun showSearchResults(results: RepositorySearch) {
         try {
-            val list: List<SearchItem> = results.getItems()
-            if (searchRecyclerView == null) {
-                searchRecyclerView = findViewById(R.id.recyclerViewSearch)
+            val resultsList: List<SearchItem> = results.getItems()
+            val searchRecyclerView: RecyclerView = findViewById(R.id.recyclerViewSearch)
+
+            if (searchRecyclerView.layoutManager == null) {
                 searchRecyclerView.setLayoutManager(LinearLayoutManager(this))
-                searchAdapter = SearchRecyclerViewAdapter(this, list)
+                val searchAdapter = SearchRecyclerViewAdapter(this, resultsList)
                 searchAdapter.setClickListener(this)
                 searchRecyclerView.setAdapter(searchAdapter)
             }
-            recyclerView.setVisibility(View.GONE)
+
+            findViewById<RecyclerView>(R.id.recyclerView).setVisibility(View.GONE)
             searchRecyclerView.setVisibility(View.VISIBLE)
-            searchView!!.clearFocus()
+            findViewById<SearchView>(R.id.searchView).clearFocus()
         } catch (e: Exception) {
             //TODO mostrar error
         }
     }
 
-    fun onItemClick(view: View?, position: Int) {
+
+    override fun onItemClick(view: View?, position: Int) {
+
+        val searchRecyclerView: RecyclerView = findViewById(R.id.recyclerViewSearch)
+        val recyclerView: RecyclerView = findViewById(R.id.recyclerView)
+        val thisLayoutManager = LinearLayoutManager(this)
+        val searchAdapter: RecyclerViewAdapter = searchRecyclerView.adapter as RecyclerViewAdapter
+        val adapter: RecyclerViewAdapter = recyclerView.adapter as RecyclerViewAdapter
+
         try {
-            if (searchRecyclerView == null || searchRecyclerView.getVisibility() === View.GONE) {
-                val name: String = adapter.repositories.get(position).getFullName()
+            if (searchRecyclerView.layoutManager != thisLayoutManager || searchRecyclerView.getVisibility() == View.GONE) {
+                val name: String = adapter.repositories.get(position).fullName
                 val i = Intent(this, RepositoryViewActivity::class.java)
                 i.putExtra("name", name)
                 i.putExtra("tree", "master")
                 startActivity(i)
             } else {
-                val name: String = searchAdapter.repositories.get(position).getFullName()
+                val name: String = searchAdapter.repositories.get(position).fullName
                 val i = Intent(this, RepositoryViewActivity::class.java)
                 i.putExtra("name", name)
                 i.putExtra("tree", "master")
@@ -144,13 +165,17 @@ class DashboardActivity: AppCompatActivity(),
         }
     }
 
-    fun onBackPressed() {
+    override fun onBackPressed() {
+        val searchRecyclerView: RecyclerView = findViewById(R.id.recyclerViewSearch)
+        val searchView: SearchView = findViewById(R.id.searchView)
+        val recyclerView: RecyclerView = findViewById(R.id.recyclerView)
+
         try {
-            if (searchRecyclerView.getVisibility() === View.VISIBLE) {
+            if (searchRecyclerView.getVisibility() == View.VISIBLE) {
                 searchRecyclerView.setVisibility(View.GONE)
-                recyclerView.setVisibility(View.VISIBLE)
-                searchView!!.setQuery("", false)
-                searchView!!.clearFocus()
+                recyclerView.visibility = View.VISIBLE
+                searchView.setQuery("", false)
+                searchView.clearFocus()
             } else {
                 super.onBackPressed()
             }
@@ -158,8 +183,5 @@ class DashboardActivity: AppCompatActivity(),
             super.onBackPressed()
         }
     }
-}
 
-private fun SearchView.setOnQueryTextListener() {
-    TODO("Not yet implemented")
 }
