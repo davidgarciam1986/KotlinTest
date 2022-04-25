@@ -16,7 +16,7 @@ import com.example.kotlintest.common.model.RepositorySearch
 import com.example.kotlintest.common.model.SearchItem
 import com.example.kotlintest.common.recycler.RecyclerViewAdapter
 import com.example.kotlintest.common.recycler.SearchRecyclerViewAdapter
-import com.example.kotlintest.repository.RepositoryViewActivity
+import com.example.kotlintest.repository.RepositoryActivity
 import kotlin.random.Random
 
 
@@ -138,30 +138,30 @@ class DashboardActivity: AppCompatActivity(),
     }
 
 
-    override fun onItemClick(view: View?, position: Int) {
+    override fun onItemClick(view: View, position: Int) {
 
         val searchRecyclerView: RecyclerView = findViewById(R.id.recyclerViewSearch)
         val recyclerView: RecyclerView = findViewById(R.id.recyclerView)
         val thisLayoutManager = LinearLayoutManager(this)
-        val searchAdapter: RecyclerViewAdapter = searchRecyclerView.adapter as RecyclerViewAdapter
+        val searchAdapter: SearchRecyclerViewAdapter? = searchRecyclerView.adapter as SearchRecyclerViewAdapter?
         val adapter: RecyclerViewAdapter = recyclerView.adapter as RecyclerViewAdapter
 
         try {
             if (searchRecyclerView.layoutManager != thisLayoutManager || searchRecyclerView.getVisibility() == View.GONE) {
-                val name: String = adapter.repositories.get(position).fullName
-                val i = Intent(this, RepositoryViewActivity::class.java)
-                i.putExtra("name", name)
-                i.putExtra("tree", "master")
-                startActivity(i)
-            } else {
-                val name: String = searchAdapter.repositories.get(position).fullName
-                val i = Intent(this, RepositoryViewActivity::class.java)
-                i.putExtra("name", name)
-                i.putExtra("tree", "master")
-                startActivity(i)
+                val name = adapter.repositories.get(position).fullName
+                val intent = Intent(this, RepositoryActivity::class.java)
+                intent.putExtra("name", name)
+                intent.putExtra("tree", "master")
+                startActivity(intent)
+            } else if (searchAdapter != null) {
+                val name = searchAdapter.repositories.get(position).fullName
+                val intent = Intent(this, RepositoryActivity::class.java)
+                intent.putExtra("name", name)
+                intent.putExtra("tree", "master")
+                startActivity(intent)
             }
         } catch (e: Exception) {
-            //TODO mostrar error
+            showError("")
         }
     }
 

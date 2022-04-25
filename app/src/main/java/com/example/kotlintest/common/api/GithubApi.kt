@@ -27,7 +27,7 @@ interface GithubApi {
     @GET("/repos/{name}")
     fun getRepository(
         @Path(value = "name",
-            encoded = true) name: String?,
+            encoded = true) name: String,
     ): Call<RepositoryDetails>
 
     @Headers(*["Content-Type:application/json"])

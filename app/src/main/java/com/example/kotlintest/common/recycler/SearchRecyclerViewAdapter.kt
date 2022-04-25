@@ -59,7 +59,7 @@ class SearchRecyclerViewAdapter(context: Context, data: List<SearchItem>) : Recy
     }
 
     interface ItemClickListener {
-        fun onItemClick(view: View?, position: Int)
+        fun onItemClick(view: View, position: Int)
     }
 
     init {

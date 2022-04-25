@@ -58,20 +58,18 @@ class RecyclerViewAdapter(context: Context, data: MutableList<Repository>) : Rec
         return repositories[id]
     }
 
-    fun setClickListener(itemClickListener: ItemClickListener?) {
-        if (itemClickListener != null) {
-            listener = itemClickListener
-        }
+    fun setClickListener(itemClickListener: ItemClickListener) {
+        listener = itemClickListener
+
     }
 
     interface ItemClickListener {
-        fun onItemClick(view: View?, position: Int)
+        fun onItemClick(view: View, position: Int)
     }
 
-    //TODO check que no peta
     init {
         inflater = LayoutInflater.from(context)
-        repositories = data as MutableList<Repository>
+        repositories = data
     }
 
 }
