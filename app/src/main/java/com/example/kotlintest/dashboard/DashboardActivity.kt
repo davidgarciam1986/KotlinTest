@@ -31,6 +31,8 @@ class DashboardActivity: AppCompatActivity(),
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_dashboard)
+
+        //Mostrar barra de progreso y cargar datos
         val progressbar: FrameLayout = findViewById(R.id.progressBarOverlay)
         progressbar.visibility = View.GONE
         val searchView: SearchView = findViewById(R.id.searchView)
@@ -39,6 +41,8 @@ class DashboardActivity: AppCompatActivity(),
 
         presenter = DashboardPresenterImpl(this)
 
+
+        //Configurar busqueda
         searchView.setOnQueryTextListener(object: SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(p0: String): Boolean {
                 presenter.searchPublicRepositories(p0)
@@ -63,9 +67,11 @@ class DashboardActivity: AppCompatActivity(),
             }
             false
         }
+
         val imageButton: ImageButton = findViewById(R.id.imageButton2)
         imageButton.setOnClickListener { searchView.visibility = View.VISIBLE }
 
+        //Busca un repositorio aleatorio
         lastAccess = Random.nextInt(200000000)
         presenter.getPublicRepositoriesSince(lastAccess)
 
@@ -86,6 +92,7 @@ class DashboardActivity: AppCompatActivity(),
     }
 
     override fun updateRepositoryList(list: MutableList<Repository>) {
+        //El servicio tiene un limite de llamadas
         try {
             lastAccess = list[list.size - 1].getId()
 
@@ -147,6 +154,7 @@ class DashboardActivity: AppCompatActivity(),
         val adapter: RecyclerViewAdapter = recyclerView.adapter as RecyclerViewAdapter
 
         try {
+            // Diferenciar entre el recycler de busqueda y el normal
             if (searchRecyclerView.layoutManager != thisLayoutManager || searchRecyclerView.getVisibility() == View.GONE) {
                 val name = adapter.repositories.get(position).fullName
                 val intent = Intent(this, RepositoryActivity::class.java)

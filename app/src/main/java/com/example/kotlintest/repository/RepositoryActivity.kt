@@ -31,6 +31,8 @@ class RepositoryActivity : AppCompatActivity(), RepositoryView {
         presenter = RepositoryPresenterImpl(this)
         fullName = getIntent().getStringExtra("name").toString()
         tree = getIntent().getStringExtra("tree").toString()
+
+        //Mostrar barra de progreso y cargar datos
         progressBarOverlay = findViewById(R.id.progressBarOverlay1)
         progressBarOverlay.visibility = View.GONE
         presenter.getRepository(fullName)
@@ -50,6 +52,7 @@ class RepositoryActivity : AppCompatActivity(), RepositoryView {
     }
 
     override fun showRepository(repository: RepositoryDetails) {
+        //rellenar datos en la vista
         val fullName: TextView = findViewById(R.id.textView3)
         val description: TextView = findViewById(R.id.textView4)
         val language: TextView = findViewById(R.id.textView5)
