@@ -6,15 +6,14 @@ import android.graphics.Typeface
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
-import android.widget.FrameLayout
-import android.widget.ImageButton
-import android.widget.LinearLayout
-import android.widget.TextView
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.example.kotlintest.R
 import com.example.kotlintest.common.model.RepositoryDetails
 import com.example.kotlintest.common.model.RepositoryTree
 import com.example.kotlintest.common.model.TreeItem
+import com.example.kotlintest.databinding.ActivityDashboardBinding
+import com.example.kotlintest.databinding.ActivityRepositoryViewBinding
 
 class RepositoryActivity : AppCompatActivity(), RepositoryView {
     lateinit var presenter: RepositoryPresenter
@@ -22,18 +21,21 @@ class RepositoryActivity : AppCompatActivity(), RepositoryView {
     lateinit var fullName: String
     lateinit var tree: String
 
+    private lateinit var activityRepositoryBinding: ActivityRepositoryViewBinding
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_repository_view)
+        activityRepositoryBinding = ActivityRepositoryViewBinding.inflate(layoutInflater)
+        setContentView(activityRepositoryBinding.root)
 
-        val imageButton: ImageButton = findViewById(R.id.imageButton)
+        val imageButton: ImageButton = activityRepositoryBinding.imageButton
         imageButton.setOnClickListener { onBackPressed() }
         presenter = RepositoryPresenterImpl(this)
         fullName = getIntent().getStringExtra("name").toString()
         tree = getIntent().getStringExtra("tree").toString()
 
         //Mostrar barra de progreso y cargar datos
-        progressBarOverlay = findViewById(R.id.progressBarOverlay1)
+        progressBarOverlay = activityRepositoryBinding.progressBarOverlay1
         progressBarOverlay.visibility = View.GONE
         presenter.getRepository(fullName)
         presenter.getTree(fullName, tree)
@@ -48,14 +50,14 @@ class RepositoryActivity : AppCompatActivity(), RepositoryView {
     }
 
     override fun showError(error: String) {
-        //TODO
+        Toast.makeText(this,error, Toast.LENGTH_SHORT).show()
     }
 
     override fun showRepository(repository: RepositoryDetails) {
         //rellenar datos en la vista
-        val fullName: TextView = findViewById(R.id.textView3)
-        val description: TextView = findViewById(R.id.textView4)
-        val language: TextView = findViewById(R.id.textView5)
+        val fullName: TextView = activityRepositoryBinding.textView3
+        val description: TextView = activityRepositoryBinding.textView4
+        val language: TextView = activityRepositoryBinding.textView5
         fullName.setText(repository.getFullName())
         description.setText(repository.getDescription())
         language.text = "Language: " + repository.getLanguage()
@@ -64,7 +66,7 @@ class RepositoryActivity : AppCompatActivity(), RepositoryView {
     override fun showTree(tree: RepositoryTree) {
         try {
             val treeItems: List<TreeItem> = tree.getTree()
-            val files: LinearLayout = findViewById(R.id.scrollView1)
+            val files: LinearLayout = activityRepositoryBinding.scrollView1
             val lparams = ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
 

@@ -8,13 +8,13 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.kotlintest.R
 import com.example.kotlintest.common.model.SearchItem
+import com.example.kotlintest.databinding.ActivityRepositoryViewBinding
 
 class SearchRecyclerViewAdapter(context: Context, data: List<SearchItem>) : RecyclerView.Adapter<SearchRecyclerViewAdapter.ViewHolder>() {
 
     var repositories: MutableList<SearchItem>
     private val inflater: LayoutInflater
     private lateinit var listener: ItemClickListener
-
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view: View = inflater.inflate(R.layout.recycler_view_item, parent, false)

@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageButton
+import android.widget.Toast
 
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
@@ -16,6 +17,7 @@ import com.example.kotlintest.common.model.RepositorySearch
 import com.example.kotlintest.common.model.SearchItem
 import com.example.kotlintest.common.recycler.RecyclerViewAdapter
 import com.example.kotlintest.common.recycler.SearchRecyclerViewAdapter
+import com.example.kotlintest.databinding.ActivityDashboardBinding
 import com.example.kotlintest.repository.RepositoryActivity
 import kotlin.random.Random
 
@@ -27,17 +29,19 @@ class DashboardActivity: AppCompatActivity(),
 {
     var lastAccess: Int = 0
     lateinit var presenter: DashboardPresenterImpl
+    private lateinit var activityDashboardBinding: ActivityDashboardBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_dashboard)
+        activityDashboardBinding = ActivityDashboardBinding.inflate(layoutInflater)
+        setContentView(activityDashboardBinding.root)
 
         //Mostrar barra de progreso y cargar datos
-        val progressbar: FrameLayout = findViewById(R.id.progressBarOverlay)
+        val progressbar: FrameLayout = activityDashboardBinding.progressBarOverlay
         progressbar.visibility = View.GONE
-        val searchView: SearchView = findViewById(R.id.searchView)
-        val searchRecyclerView: RecyclerView = findViewById(R.id.recyclerViewSearch)
-        val recyclerView: RecyclerView = findViewById(R.id.recyclerView)
+        val searchView: SearchView = activityDashboardBinding.searchView
+        val searchRecyclerView: RecyclerView = activityDashboardBinding.recyclerViewSearch
+        val recyclerView: RecyclerView = activityDashboardBinding.recyclerView
 
         presenter = DashboardPresenterImpl(this)
 
@@ -68,7 +72,7 @@ class DashboardActivity: AppCompatActivity(),
             false
         }
 
-        val imageButton: ImageButton = findViewById(R.id.imageButton2)
+        val imageButton: ImageButton = activityDashboardBinding.imageButton2
         imageButton.setOnClickListener { searchView.visibility = View.VISIBLE }
 
         //Busca un repositorio aleatorio
@@ -80,15 +84,15 @@ class DashboardActivity: AppCompatActivity(),
 
 
     override fun showProgressBar() {
-        findViewById<FrameLayout>(R.id.progressBarOverlay).visibility = View.VISIBLE
+        activityDashboardBinding.progressBarOverlay.visibility = View.VISIBLE
     }
 
     override fun hideProgress() {
-        findViewById<FrameLayout>(R.id.progressBarOverlay).visibility = View.GONE
+        activityDashboardBinding.progressBarOverlay.visibility = View.GONE
     }
 
     override fun showError(error: String) {
-        //TODO mostrar error
+        Toast.makeText(this,error,Toast.LENGTH_SHORT).show()
     }
 
     override fun updateRepositoryList(list: MutableList<Repository>) {
@@ -96,7 +100,7 @@ class DashboardActivity: AppCompatActivity(),
         try {
             lastAccess = list[list.size - 1].getId()
 
-            val recyclerView: RecyclerView = findViewById(R.id.recyclerView)
+            val recyclerView: RecyclerView = activityDashboardBinding.recyclerView
             if (recyclerView.layoutManager == null) {
                 val layoutManager = LinearLayoutManager(this)
                 val adapter = RecyclerViewAdapter(this, list)
@@ -127,28 +131,30 @@ class DashboardActivity: AppCompatActivity(),
     override fun showSearchResults(results: RepositorySearch) {
         try {
             val resultsList: List<SearchItem> = results.getItems()
-            val searchRecyclerView: RecyclerView = findViewById(R.id.recyclerViewSearch)
+            val searchRecyclerView: RecyclerView = activityDashboardBinding.recyclerViewSearch
 
             if (searchRecyclerView.layoutManager == null) {
                 searchRecyclerView.setLayoutManager(LinearLayoutManager(this))
-                val searchAdapter = SearchRecyclerViewAdapter(this, resultsList)
-                searchAdapter.setClickListener(this)
-                searchRecyclerView.setAdapter(searchAdapter)
+
             }
 
-            findViewById<RecyclerView>(R.id.recyclerView).setVisibility(View.GONE)
+            val searchAdapter = SearchRecyclerViewAdapter(this, resultsList)
+            searchAdapter.setClickListener(this)
+            searchRecyclerView.setAdapter(searchAdapter)
+
+            activityDashboardBinding.recyclerView.setVisibility(View.GONE)
             searchRecyclerView.setVisibility(View.VISIBLE)
-            findViewById<SearchView>(R.id.searchView).clearFocus()
+            activityDashboardBinding.searchView.clearFocus()
         } catch (e: Exception) {
-            //TODO mostrar error
+            showError("")
         }
     }
 
 
     override fun onItemClick(view: View, position: Int) {
 
-        val searchRecyclerView: RecyclerView = findViewById(R.id.recyclerViewSearch)
-        val recyclerView: RecyclerView = findViewById(R.id.recyclerView)
+        val searchRecyclerView: RecyclerView = activityDashboardBinding.recyclerViewSearch
+        val recyclerView: RecyclerView = activityDashboardBinding.recyclerView
         val thisLayoutManager = LinearLayoutManager(this)
         val searchAdapter: SearchRecyclerViewAdapter? = searchRecyclerView.adapter as SearchRecyclerViewAdapter?
         val adapter: RecyclerViewAdapter = recyclerView.adapter as RecyclerViewAdapter
@@ -174,9 +180,9 @@ class DashboardActivity: AppCompatActivity(),
     }
 
     override fun onBackPressed() {
-        val searchRecyclerView: RecyclerView = findViewById(R.id.recyclerViewSearch)
-        val searchView: SearchView = findViewById(R.id.searchView)
-        val recyclerView: RecyclerView = findViewById(R.id.recyclerView)
+        val searchRecyclerView: RecyclerView = activityDashboardBinding.recyclerViewSearch
+        val searchView: SearchView = activityDashboardBinding.searchView
+        val recyclerView: RecyclerView = activityDashboardBinding.recyclerView
 
         try {
             if (searchRecyclerView.getVisibility() == View.VISIBLE) {
